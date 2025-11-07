@@ -33,6 +33,9 @@ const CLASSROOM_LATLNG = leaflet.latLng(
 
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
+const TILE_DEGREES = 1e-4;
+const SCREEN_WIDTH = 34;
+const SCREEN_HEIGHT = 12;
 
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
@@ -61,3 +64,25 @@ playerMarker.addTo(map);
 // Display the player's points
 //let tokenValue = 0;
 statusPanelDiv.innerHTML = "No points yet...";
+
+// Add cells to the map by cell numbers
+function spawnCell(x: number, y: number) {
+  // Convert cell numbers into lat/lng bounds
+  const origin = CLASSROOM_LATLNG;
+  const bounds = leaflet.latLngBounds([
+    [origin.lat + y * TILE_DEGREES, origin.lng + x * TILE_DEGREES],
+    [origin.lat + (y + 1) * TILE_DEGREES, origin.lng + (x + 1) * TILE_DEGREES],
+  ]);
+
+  // Add a rectangle to the map to represent the cache
+  const rect = leaflet.rectangle(bounds);
+  rect.addTo(map);
+}
+
+// Look around the player's neighborhood for caches to spawn
+for (let x = -SCREEN_WIDTH; x < SCREEN_WIDTH; x++) {
+  for (let y = -SCREEN_HEIGHT; y < SCREEN_HEIGHT; y++) {
+    // If location i,j is lucky enough, spawn a cache!
+    spawnCell(x, y);
+  }
+}
