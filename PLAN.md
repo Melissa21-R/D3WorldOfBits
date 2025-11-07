@@ -6,7 +6,7 @@
 [x] Delete starter main.ts content
 [x] Initialize Leaflet map centered on classroom
 [x] Draw player location
-[ ] Draw a grid of cells (e.g., 5x5)
+[x] Draw a grid of cells (e.g., 5x5)
 [ ] Make cells show token value (text or emoji 🎯)
 [ ] Allow clicking only on nearby cells
 [ ] Implement token pickup (max 1 in hand)

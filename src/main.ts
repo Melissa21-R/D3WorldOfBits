@@ -77,6 +77,14 @@ function spawnCell(x: number, y: number) {
   // Add a rectangle to the map to represent the cache
   const rect = leaflet.rectangle(bounds);
   rect.addTo(map);
+
+  const myIcon = leaflet.divIcon({ className: "my-div-icon", html: "0" });
+  // you can set .my-div-icon styles in CSS
+
+  leaflet.marker([
+    origin.lat + (y + 0.5) * TILE_DEGREES,
+    origin.lng + (x + 0.5) * TILE_DEGREES,
+  ], { icon: myIcon }).addTo(map);
 }
 
 // Look around the player's neighborhood for caches to spawn
