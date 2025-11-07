@@ -5,7 +5,7 @@
 [x] Use template and enable GitHub Actions
 [x] Delete starter main.ts content
 [x] Initialize Leaflet map centered on classroom
-[ ] Draw player location
+[x] Draw player location
 [ ] Draw a grid of cells (e.g., 5x5)
 [ ] Make cells show token value (text or emoji 🎯)
 [ ] Allow clicking only on nearby cells

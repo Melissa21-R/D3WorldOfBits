@@ -9,7 +9,7 @@ import "./style.css"; // student-controlled page style
 import "./_leafletWorkaround.ts"; // fixes for missing Leaflet images
 
 // Import our luck function
-import luck from "./_luck.ts";
+//import luck from "./_luck.ts";
 
 // Create basic UI elements
 
@@ -34,7 +34,6 @@ const CLASSROOM_LATLNG = leaflet.latLng(
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
 
-
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
   center: CLASSROOM_LATLNG,
@@ -54,3 +53,11 @@ leaflet
   })
   .addTo(map);
 
+// Add a marker to represent the player
+const playerMarker = leaflet.marker(CLASSROOM_LATLNG);
+playerMarker.bindTooltip("That's you!");
+playerMarker.addTo(map);
+
+// Display the player's points
+//let tokenValue = 0;
+statusPanelDiv.innerHTML = "No points yet...";
