@@ -84,12 +84,15 @@ function spawnCell(x: number, y: number) {
   const rect = leaflet.rectangle(bounds);
   rect.addTo(map);
 
+  //create a value variable that stores the value in the cell
   let value = 0;
 
+  //spawn our values creating cells of 0's and 1's but its consistant upon reloads
   if (luck([x, y].toString()) < PERCENT_CHANCE) {
     value = 1;
   }
 
+  //icon in my marker is text so it appears
   const myIcon = leaflet.divIcon({
     className: "my-div-icon",
     html: value.toString(),
@@ -102,6 +105,7 @@ function spawnCell(x: number, y: number) {
     origin.lng + (x + 0.5) * TILE_DEGREES,
   ], { icon: myIcon, interactive: false }).addTo(map);
 
+  //store all the variables in a cell here
   const cell = {
     rectangle: rect,
     marker: marker,
@@ -113,6 +117,7 @@ function spawnCell(x: number, y: number) {
   onScreenCells.push(cell);
 
   rect.on("click", () => {
+    //take the distance using pythogoreum therom to make sure that you cant access a cell more than 3 cells away
     if (
       Math.sqrt(
         Math.pow(currentLocation.x - cell.xCoord, 2) +
@@ -144,7 +149,7 @@ function spawnCell(x: number, y: number) {
         element.innerHTML = cell.value.toString();
       }
     }
-
+    //add my win condition here
     if (inventory == 8) {
       statusPanelDiv.innerHTML = "You WIN!!!!";
     }
