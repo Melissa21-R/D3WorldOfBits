@@ -39,9 +39,9 @@ const SCREEN_HEIGHT = 12;
 const PERCENT_CHANCE = 0.30;
 
 //Singular Variables
-//let inventory = 0;
-let currentLocation = { x: 0, y: 0 };
-let onScreenCells = [];
+let inventory = 0;
+const currentLocation = { x: 0, y: 0 };
+const onScreenCells = [];
 
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
@@ -119,9 +119,16 @@ function spawnCell(x: number, y: number) {
           (Math.pow(currentLocation.y - cell.yCoord, 2)),
       ) <= 3
     ) {
+      //inventory system if cell is not empty and you have no token already in hand pick up token
+      if (cell.value != 0 && inventory == 0) {
+        inventory = cell.value;
+        cell.value = 0;
+        statusPanelDiv.innerHTML = "Your tokens: " + inventory.toString();
+      }
+
       const element = marker.getElement();
       if (element) {
-        element.innerHTML = "1";
+        element.innerHTML = cell.value.toString();
       }
     }
   });
