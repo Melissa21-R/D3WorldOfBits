@@ -9,7 +9,7 @@ import "./style.css"; // student-controlled page style
 import "./_leafletWorkaround.ts"; // fixes for missing Leaflet images
 
 // Import our luck function
-//import luck from "./_luck.ts";
+import luck from "./_luck.ts";
 
 // Create basic UI elements
 
@@ -36,6 +36,10 @@ const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
 const SCREEN_WIDTH = 34;
 const SCREEN_HEIGHT = 12;
+const PERCENT_CHANCE = 0.30;
+
+//Singular Variables
+//let inventory = 0;
 
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
@@ -79,12 +83,24 @@ function spawnCell(x: number, y: number) {
   rect.addTo(map);
 
   const myIcon = leaflet.divIcon({ className: "my-div-icon", html: "0" });
+
+  if (luck([x, y].toString()) < PERCENT_CHANCE) {
+    myIcon.options.html = "1";
+  }
+
   // you can set .my-div-icon styles in CSS
 
-  leaflet.marker([
+  const marker = leaflet.marker([
     origin.lat + (y + 0.5) * TILE_DEGREES,
     origin.lng + (x + 0.5) * TILE_DEGREES,
-  ], { icon: myIcon }).addTo(map);
+  ], { icon: myIcon, interactive: false }).addTo(map);
+
+  rect.on("click", () => {
+    const element = marker.getElement();
+    if (element) {
+      element.innerHTML = "1";
+    }
+  });
 }
 
 // Look around the player's neighborhood for caches to spawn
