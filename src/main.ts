@@ -119,13 +119,26 @@ function spawnCell(x: number, y: number) {
           (Math.pow(currentLocation.y - cell.yCoord, 2)),
       ) <= 3
     ) {
-      //inventory system if cell is not empty and you have no token already in hand pick up token
+      /*
+      - inventory system if cell is not empty and you have no token already in hand pick up token
+      - or if the cell value is equal to the value you in your inventory take then and craft them together
+      - and lastly if the cell is empty take the token value in your hand and place it into the empty cell
+      */
       if (cell.value != 0 && inventory == 0) {
         inventory = cell.value;
         cell.value = 0;
         statusPanelDiv.innerHTML = "Your tokens: " + inventory.toString();
+      } else if (cell.value == inventory) {
+        cell.value = cell.value + inventory;
+        inventory = 0;
+        statusPanelDiv.innerHTML = "No points yet...";
+      } else if (cell.value == 0) {
+        cell.value = inventory;
+        inventory = 0;
+        statusPanelDiv.innerHTML = "No points yet...";
       }
 
+      //edit the html to display the new correct token value
       const element = marker.getElement();
       if (element) {
         element.innerHTML = cell.value.toString();

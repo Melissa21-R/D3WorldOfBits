@@ -10,5 +10,5 @@
 [x] Make cells show token value (text or emoji 🎯)
 [x] Allow clicking only on nearby cells
 [x] Implement token pickup (max 1 in hand)
-[ ] Implement crafting: click cell with same-value token to merge or place in empty cell
+[x] Implement crafting: click cell with same-value token to merge or place in empty cell
 [ ] Display win condition when high-value token crafted
