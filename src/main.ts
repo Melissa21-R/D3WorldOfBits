@@ -40,6 +40,8 @@ const PERCENT_CHANCE = 0.30;
 
 //Singular Variables
 //let inventory = 0;
+let currentLocation = { x: 0, y: 0 };
+let onScreenCells = [];
 
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
@@ -82,11 +84,16 @@ function spawnCell(x: number, y: number) {
   const rect = leaflet.rectangle(bounds);
   rect.addTo(map);
 
-  const myIcon = leaflet.divIcon({ className: "my-div-icon", html: "0" });
+  let value = 0;
 
   if (luck([x, y].toString()) < PERCENT_CHANCE) {
-    myIcon.options.html = "1";
+    value = 1;
   }
+
+  const myIcon = leaflet.divIcon({
+    className: "my-div-icon",
+    html: value.toString(),
+  });
 
   // you can set .my-div-icon styles in CSS
 
@@ -95,10 +102,27 @@ function spawnCell(x: number, y: number) {
     origin.lng + (x + 0.5) * TILE_DEGREES,
   ], { icon: myIcon, interactive: false }).addTo(map);
 
+  const cell = {
+    rectangle: rect,
+    marker: marker,
+    xCoord: x,
+    yCoord: y,
+    value: value,
+  };
+
+  onScreenCells.push(cell);
+
   rect.on("click", () => {
-    const element = marker.getElement();
-    if (element) {
-      element.innerHTML = "1";
+    if (
+      Math.sqrt(
+        Math.pow(currentLocation.x - cell.xCoord, 2) +
+          (Math.pow(currentLocation.y - cell.yCoord, 2)),
+      ) <= 3
+    ) {
+      const element = marker.getElement();
+      if (element) {
+        element.innerHTML = "1";
+      }
     }
   });
 }
