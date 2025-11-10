@@ -11,4 +11,4 @@
 [x] Allow clicking only on nearby cells
 [x] Implement token pickup (max 1 in hand)
 [x] Implement crafting: click cell with same-value token to merge or place in empty cell
-[ ] Display win condition when high-value token crafted
+[x] Display win condition when high-value token crafted

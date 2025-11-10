@@ -144,6 +144,10 @@ function spawnCell(x: number, y: number) {
         element.innerHTML = cell.value.toString();
       }
     }
+
+    if (inventory == 8) {
+      statusPanelDiv.innerHTML = "You WIN!!!!";
+    }
   });
 }
 
