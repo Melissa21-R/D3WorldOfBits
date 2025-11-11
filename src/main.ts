@@ -34,14 +34,8 @@ const CLASSROOM_LATLNG = leaflet.latLng(
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
-const SCREEN_WIDTH = 34;
-const SCREEN_HEIGHT = 12;
+const VIEW_DISTANCE = 50;
 const PERCENT_CHANCE = 0.30;
-
-//Singular Variables
-let inventory = 0;
-const currentLocation = { x: 0, y: 0 };
-const onScreenCells = [];
 
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
@@ -52,6 +46,41 @@ const map = leaflet.map(mapDiv, {
   zoomControl: false,
   scrollWheelZoom: false,
 });
+
+//first define the interface of cell
+interface Cell {
+  rectangle: leaflet.Rectangle;
+  marker: leaflet.Marker;
+  xCoord: number;
+  yCoord: number;
+  value: number;
+}
+
+//Singular Variables
+let inventory = 0;
+const currentLocation = { x: 0, y: 0 };
+const onScreenCells: Cell[] = [];
+
+//button UI lay out all my movement buttons
+const northButton = document.createElement("button");
+northButton.textContent = "↑ North";
+northButton.id = "northButton";
+controlPanelDiv.appendChild(northButton);
+
+const southButton = document.createElement("button");
+southButton.textContent = "↓ South";
+southButton.id = "southButton";
+controlPanelDiv.appendChild(southButton);
+
+const eastButton = document.createElement("button");
+eastButton.textContent = "-> East";
+eastButton.id = "eastButton";
+controlPanelDiv.appendChild(eastButton);
+
+const westButton = document.createElement("button");
+westButton.textContent = "<- West";
+westButton.id = "westButton";
+controlPanelDiv.appendChild(westButton);
 
 // Populate the map with a background tile layer
 leaflet
@@ -106,7 +135,7 @@ function spawnCell(x: number, y: number) {
   ], { icon: myIcon, interactive: false }).addTo(map);
 
   //store all the variables in a cell here
-  const cell = {
+  const cell: Cell = {
     rectangle: rect,
     marker: marker,
     xCoord: x,
@@ -156,26 +185,33 @@ function spawnCell(x: number, y: number) {
   });
 }
 
-//button UI lay out all my movement buttons
-const northButton = document.createElement("button");
-northButton.textContent = "↑ North";
-northButton.id = "northButton";
-controlPanelDiv.appendChild(northButton);
+function redrawGrid() {
+  //remove all the existing cells
+  for (const cell of onScreenCells) {
+    cell.rectangle.removeFrom(map);
+    cell.marker.removeFrom(map);
+  }
 
-const southButton = document.createElement("button");
-southButton.textContent = "↓ South";
-southButton.id = "southButton";
-controlPanelDiv.appendChild(southButton);
+  onScreenCells.length = 0; //this will clear my array
 
-const eastButton = document.createElement("button");
-eastButton.textContent = "-> East";
-eastButton.id = "eastButton";
-controlPanelDiv.appendChild(eastButton);
-
-const westButton = document.createElement("button");
-westButton.textContent = "<- West";
-westButton.id = "westButton";
-controlPanelDiv.appendChild(westButton);
+  //now repopulate around the players current position
+  const half = Math.floor(VIEW_DISTANCE / 2);
+  for (
+    let x = -half;
+    x < half;
+    x++
+  ) {
+    for (
+      let y = -half;
+      y < half;
+      y++
+    ) {
+      const gridX = currentLocation.x + x;
+      const gridY = currentLocation.y + y;
+      spawnCell(gridX, gridY);
+    }
+  }
+}
 
 //Player movement function, takes in the x and y value on the grid and moves the player that many spaces
 function playerMovement(dx: number, dy: number) {
@@ -189,6 +225,12 @@ function playerMovement(dx: number, dy: number) {
 
   //move the player marer to the new position
   playerMarker.setLatLng([newLat, newLng]);
+
+  //will always center around the player
+  map.setView([newLat, newLng]);
+
+  //redraw the grid upon movement
+  redrawGrid();
 }
 
 //call playermovement when putton is pressed to simulate movement
@@ -210,9 +252,15 @@ westButton.addEventListener("click", () => {
 });
 
 // Look around the player's neighborhood for caches to spawn
+//worked but now we have redraw grid so this is no longer needed since it spawns at a fixed
+/*
 for (let x = -SCREEN_WIDTH; x < SCREEN_WIDTH; x++) {
   for (let y = -SCREEN_HEIGHT; y < SCREEN_HEIGHT; y++) {
     // If location i,j is lucky enough, spawn a cache!
     spawnCell(x, y);
   }
 }
+*/
+
+//now we just call the redraw grid function to start up
+redrawGrid();
