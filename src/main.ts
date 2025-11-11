@@ -156,6 +156,14 @@ function spawnCell(x: number, y: number) {
   });
 }
 
+function playerMovement(dx: number, dy: number) {
+  currentLocation.x = currentLocation.x + dx;
+  currentLocation.y = currentLocation.y + dy;
+}
+
+//needed to call so I can push
+playerMovement(currentLocation.x, currentLocation.y);
+
 // Look around the player's neighborhood for caches to spawn
 for (let x = -SCREEN_WIDTH; x < SCREEN_WIDTH; x++) {
   for (let y = -SCREEN_HEIGHT; y < SCREEN_HEIGHT; y++) {
