@@ -156,13 +156,58 @@ function spawnCell(x: number, y: number) {
   });
 }
 
+//button UI lay out all my movement buttons
+const northButton = document.createElement("button");
+northButton.textContent = "↑ North";
+northButton.id = "northButton";
+controlPanelDiv.appendChild(northButton);
+
+const southButton = document.createElement("button");
+southButton.textContent = "↓ South";
+southButton.id = "southButton";
+controlPanelDiv.appendChild(southButton);
+
+const eastButton = document.createElement("button");
+eastButton.textContent = "-> East";
+eastButton.id = "eastButton";
+controlPanelDiv.appendChild(eastButton);
+
+const westButton = document.createElement("button");
+westButton.textContent = "<- West";
+westButton.id = "westButton";
+controlPanelDiv.appendChild(westButton);
+
+//Player movement function, takes in the x and y value on the grid and moves the player that many spaces
 function playerMovement(dx: number, dy: number) {
+  //update the logical position
   currentLocation.x = currentLocation.x + dx;
   currentLocation.y = currentLocation.y + dy;
+
+  //convert the grid coords to actual lat/lng
+  const newLat = CLASSROOM_LATLNG.lat + currentLocation.y * TILE_DEGREES;
+  const newLng = CLASSROOM_LATLNG.lng + currentLocation.x * TILE_DEGREES;
+
+  //move the player marer to the new position
+  playerMarker.setLatLng([newLat, newLng]);
 }
 
-//needed to call so I can push
-playerMovement(currentLocation.x, currentLocation.y);
+//call playermovement when putton is pressed to simulate movement
+northButton.addEventListener("click", () => {
+  playerMovement(0, 1);
+});
+
+southButton.addEventListener("click", () => {
+  playerMovement(0, -1);
+});
+
+eastButton.addEventListener("click", () => {
+  playerMovement(1, 0);
+});
+
+westButton.addEventListener("click", () => {
+  playerMovement(-1, 0);
+  console.log(currentLocation);
+});
 
 // Look around the player's neighborhood for caches to spawn
 for (let x = -SCREEN_WIDTH; x < SCREEN_WIDTH; x++) {

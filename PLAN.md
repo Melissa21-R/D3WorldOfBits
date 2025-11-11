@@ -16,7 +16,7 @@
 ## D3.b: Globe-spanning Gameplay
 
 [x] Add player movement: implement `movePlayer(dx: number, dy: number)` function (in grid units)
-[ ] Render player avatar on map using Leaflet marker or custom DOM element
+[x] Render player avatar on map using Leaflet marker or custom DOM element
 [ ] Add UI buttons (N/S/E/W) that call movement function
 [ ] Update grid rendering: generate cells around _player's global position_, not fixed center
 [ ] Use earth-spanning coordinates: anchor grid on (0,0), calculate cell lat/lng from grid indices
