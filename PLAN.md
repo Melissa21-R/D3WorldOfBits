@@ -19,8 +19,8 @@
 [x] Render player avatar on map using Leaflet marker or custom DOM element
 [x] Add UI buttons (N/S/E/W) that call movement function
 [x] Update grid rendering: generate cells around _player's global position_, not fixed center
-[ ] Use earth-spanning coordinates: anchor grid on (0,0), calculate cell lat/lng from grid indices
-[ ] Ensure only nearby cells (e.g. 3x3 around player) are interactive (clickable)
+[x] Use earth-spanning coordinates: anchor grid on (0,0), calculate cell lat/lng from grid indices
+[x] Ensure only nearby cells (e.g. 3x3 around player) are interactive (clickable)
 [ ] Test movement across map boundaries (e.g. cross equator, prime meridian)
 [ ] Verify gameplay works far from starting location (try jumping to NYC or Tokyo in code)
 [ ] Make sure previously visited cells aren’t reset when re-entering view (hint: prepare for D3.c)

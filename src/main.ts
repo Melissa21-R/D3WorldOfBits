@@ -37,9 +37,16 @@ const TILE_DEGREES = 1e-4;
 const VIEW_DISTANCE = 50;
 const PERCENT_CHANCE = 0.30;
 
+//Singular Variable
+let inventory = 0;
+const Starting_X = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
+const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
+const currentLocation = { x: Starting_X, y: Starting_Y };
+const onScreenCells: Cell[] = [];
+
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
-  center: CLASSROOM_LATLNG,
+  center: [currentLocation.y * TILE_DEGREES, currentLocation.x * TILE_DEGREES],
   zoom: GAMEPLAY_ZOOM_LEVEL,
   minZoom: GAMEPLAY_ZOOM_LEVEL,
   maxZoom: GAMEPLAY_ZOOM_LEVEL,
@@ -55,11 +62,6 @@ interface Cell {
   yCoord: number;
   value: number;
 }
-
-//Singular Variables
-let inventory = 0;
-const currentLocation = { x: 0, y: 0 };
-const onScreenCells: Cell[] = [];
 
 //button UI lay out all my movement buttons
 const northButton = document.createElement("button");
@@ -92,7 +94,10 @@ leaflet
   .addTo(map);
 
 // Add a marker to represent the player
-const playerMarker = leaflet.marker(CLASSROOM_LATLNG);
+const playerMarker = leaflet.marker([
+  currentLocation.y * TILE_DEGREES,
+  currentLocation.x * TILE_DEGREES,
+]);
 playerMarker.bindTooltip("That's you!");
 playerMarker.addTo(map);
 
@@ -103,10 +108,11 @@ statusPanelDiv.innerHTML = "No points yet...";
 // Add cells to the map by cell numbers
 function spawnCell(x: number, y: number) {
   // Convert cell numbers into lat/lng bounds
-  const origin = CLASSROOM_LATLNG;
+  const lat = y * TILE_DEGREES;
+  const lng = x * TILE_DEGREES;
   const bounds = leaflet.latLngBounds([
-    [origin.lat + y * TILE_DEGREES, origin.lng + x * TILE_DEGREES],
-    [origin.lat + (y + 1) * TILE_DEGREES, origin.lng + (x + 1) * TILE_DEGREES],
+    [lat, lng],
+    [lat + TILE_DEGREES, lng + TILE_DEGREES],
   ]);
 
   // Add a rectangle to the map to represent the cache
@@ -130,8 +136,8 @@ function spawnCell(x: number, y: number) {
   // you can set .my-div-icon styles in CSS
 
   const marker = leaflet.marker([
-    origin.lat + (y + 0.5) * TILE_DEGREES,
-    origin.lng + (x + 0.5) * TILE_DEGREES,
+    lat + TILE_DEGREES / 2,
+    lng + TILE_DEGREES / 2,
   ], { icon: myIcon, interactive: false }).addTo(map);
 
   //store all the variables in a cell here
@@ -220,8 +226,8 @@ function playerMovement(dx: number, dy: number) {
   currentLocation.y = currentLocation.y + dy;
 
   //convert the grid coords to actual lat/lng
-  const newLat = CLASSROOM_LATLNG.lat + currentLocation.y * TILE_DEGREES;
-  const newLng = CLASSROOM_LATLNG.lng + currentLocation.x * TILE_DEGREES;
+  const newLat = currentLocation.y * TILE_DEGREES;
+  const newLng = currentLocation.x * TILE_DEGREES;
 
   //move the player marer to the new position
   playerMarker.setLatLng([newLat, newLng]);
@@ -248,7 +254,6 @@ eastButton.addEventListener("click", () => {
 
 westButton.addEventListener("click", () => {
   playerMovement(-1, 0);
-  console.log(currentLocation);
 });
 
 // Look around the player's neighborhood for caches to spawn
