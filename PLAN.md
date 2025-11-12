@@ -23,5 +23,5 @@
 [x] Ensure only nearby cells (e.g. 3x3 around player) are interactive (clickable)
 [x] Test movement across map boundaries (e.g. cross equator, prime meridian)
 [x] Verify gameplay works far from starting location (try jumping to NYC or Tokyo in code)
-[ ] Be sure that cells continue to spawn when I player scrolls throughout the map
+[x] Be sure that cells continue to spawn when I player scrolls throughout the map
 [ ] Add one cleanup commit: extract constants, rename variables, remove debug logs

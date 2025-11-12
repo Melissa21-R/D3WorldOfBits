@@ -217,10 +217,10 @@ function spawnCell(x: number, y: number) {
   });
 }
 
-map.on("move", updtateVisibleCells);
+map.on("move", updateVisibleCells);
 
 //allow cells to spawn via scrolling on the map
-function updtateVisibleCells() {
+function updateVisibleCells() {
   //get current view bounds
   const bounds = map.getBounds();
   const south = Math.floor(bounds.getSouth() / TILE_DEGREES);
@@ -244,34 +244,6 @@ function updtateVisibleCells() {
   }
 }
 
-function redrawGrid() {
-  //remove all the existing cells
-  for (const cell of onScreenCells) {
-    cell.rectangle.removeFrom(map);
-    cell.marker.removeFrom(map);
-  }
-
-  onScreenCells.length = 0; //this will clear my array
-
-  //now repopulate around the players current position
-  const half = Math.floor(VIEW_DISTANCE / 2);
-  for (
-    let x = -half;
-    x < half;
-    x++
-  ) {
-    for (
-      let y = -half;
-      y < half;
-      y++
-    ) {
-      const gridX = currentLocation.x + x;
-      const gridY = currentLocation.y + y;
-      spawnCell(gridX, gridY);
-    }
-  }
-}
-
 //Player movement function, takes in the x and y value on the grid and moves the player that many spaces
 function playerMovement(dx: number, dy: number) {
   //update the logical position
@@ -289,7 +261,7 @@ function playerMovement(dx: number, dy: number) {
   map.setView([newLat, newLng]);
 
   //redraw the grid upon movement
-  redrawGrid();
+  updateVisibleCells();
 }
 
 //call playermovement when putton is pressed to simulate movement
@@ -321,5 +293,4 @@ for (let x = -SCREEN_WIDTH; x < SCREEN_WIDTH; x++) {
 */
 
 //now we just call the redraw grid function to start up
-redrawGrid();
-updtateVisibleCells();
+updateVisibleCells();
