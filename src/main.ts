@@ -44,22 +44,29 @@ const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
 const currentLocation = { x: Starting_X, y: Starting_Y };
 const onScreenCells: Cell[] = [];
 
-//lets test if I can cross the equator and prime meridian
+//lets test if I can cross the equator and prime meridian, as well as far distance
 
 /*
 Lets test the Equator first
-- Can I move smoothly and do cells still spawn (yes they do)
+- Can I move smoothly and do cells still spawn? (yes they do!)
 const testX = Math.floor(-55 / TILE_DEGREES); //Amazon Rainforest
 const testY = Math.floor(0.001 / TILE_DEGREES);
 const currentLocation = { x: testX, y: testY };
 */
 
-
 /*
 Lets test the Prime Meridian
-- Can I move smoothly and do cells still spawn (yes they do)
+- Can I move smoothly and do cells still spawn? (yes they do!)
 const testX = Math.floor(0.001 / TILE_DEGREES);
 const testY = Math.floor(51.5 / TILE_DEGREES); //london
+const currentLocation = { x: testX, y: testY };
+*/
+
+/*
+Lets test from a far distance now, like tokyo
+-can I move smoothly and do cells still spawn? (yes they do!)
+const testX = Math.floor(139.691 / TILE_DEGREES); //Tokyo
+const testY = Math.floor(35.689 / TILE_DEGREES);
 const currentLocation = { x: testX, y: testY };
 */
 
