@@ -25,3 +25,4 @@
 [x] Verify gameplay works far from starting location (try jumping to NYC or Tokyo in code)
 [x] Be sure that cells continue to spawn when I player scrolls throughout the map
 [x] Add one cleanup commit: extract constants, rename variables, remove debug logs
+[x] Create a new win threshold

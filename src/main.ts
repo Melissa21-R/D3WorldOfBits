@@ -210,7 +210,7 @@ function spawnCell(x: number, y: number) {
       }
     }
     //add my win condition here
-    if (inventory == 8) {
+    if (inventory == 16) {
       statusPanelDiv.innerHTML = "You WIN!!!!";
     }
   });
