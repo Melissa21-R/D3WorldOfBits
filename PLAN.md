@@ -26,3 +26,20 @@
 [x] Be sure that cells continue to spawn when I player scrolls throughout the map
 [x] Add one cleanup commit: extract constants, rename variables, remove debug logs
 [x] Create a new win threshold
+
+## D3.c: Object Persistence
+
+[x] Design `worldState: Map<string, number>` to store only modified cell token values
+[x] Create `getCellKey(lat: number, lng: number): string` to hash grid-aligned coords (e.g., `"3699,-12206"`)
+[x] For any cell:
+[x] If `worldState.has(key)`: use stored value
+[x] Else: compute initial state via `luck()` hashing — do **not** store until modified
+[ ] When player picks up a token:
+[ ] Set `worldState.set(key, 0)` (or delete entry if 0 means "default")
+[ ] Later: decide if storing `0` is cleaner than deletion (consistency vs. size)
+[ ] When crafting: update target cell in `worldState`
+[ ] Rebuild visible cells from scratch each time — do **not** keep DOM nodes alive
+[ ] Test: move away and back — does state persist?
+[ ] Test: craft a token, leave, return — is it still gone?
+[ ] Make sure untouched cells still use `luck()` — no premature storage
+[ ] Add one cleanup commit: remove unused variables, debug logs

@@ -43,6 +43,9 @@ const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
 const currentLocation = { x: Starting_X, y: Starting_Y };
 const onScreenCells: Cell[] = [];
 
+//persistent world state: only stores cells that have been changed by the player
+const worldState = new Map<string, number>();
+
 //lets test if I can cross the equator and prime meridian, as well as far distance
 
 /*
@@ -130,6 +133,11 @@ playerMarker.addTo(map);
 //let tokenValue = 0;
 statusPanelDiv.innerHTML = "No points yet...";
 
+//a helper function that will convert world  coords to a grid-aligned key string
+function getCellKey(x: number, y: number): string {
+  return `${x}, ${y}`;
+}
+
 // Add cells to the map by cell numbers
 function spawnCell(x: number, y: number) {
   // Convert cell numbers into lat/lng bounds
@@ -145,11 +153,14 @@ function spawnCell(x: number, y: number) {
   rect.addTo(map);
 
   //create a value variable that stores the value in the cell
-  let value = 0;
+  let value: number;
+  const key = getCellKey(x, y);
 
   //spawn our values creating cells of 0's and 1's but its consistant upon reloads
-  if (luck([x, y].toString()) < PERCENT_CHANCE) {
-    value = 1;
+  if (worldState.has(key)) {
+    value = worldState.get(key)!;
+  } else {
+    value = luck([x, y].toString()) < PERCENT_CHANCE ? 1 : 0;
   }
 
   //icon in my marker is text so it appears
