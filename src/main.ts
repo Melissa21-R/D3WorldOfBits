@@ -44,6 +44,25 @@ const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
 const currentLocation = { x: Starting_X, y: Starting_Y };
 const onScreenCells: Cell[] = [];
 
+//lets test if I can cross the equator and prime meridian
+
+/*
+Lets test the Equator first
+- Can I move smoothly and do cells still spawn (yes they do)
+const testX = Math.floor(-55 / TILE_DEGREES); //Amazon Rainforest
+const testY = Math.floor(0.001 / TILE_DEGREES);
+const currentLocation = { x: testX, y: testY };
+*/
+
+
+/*
+Lets test the Prime Meridian
+- Can I move smoothly and do cells still spawn (yes they do)
+const testX = Math.floor(0.001 / TILE_DEGREES);
+const testY = Math.floor(51.5 / TILE_DEGREES); //london
+const currentLocation = { x: testX, y: testY };
+*/
+
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
   center: [currentLocation.y * TILE_DEGREES, currentLocation.x * TILE_DEGREES],
