@@ -217,6 +217,33 @@ function spawnCell(x: number, y: number) {
   });
 }
 
+map.on("move", updtateVisibleCells);
+
+//allow cells to spawn via scrolling on the map
+function updtateVisibleCells() {
+  //get current view bounds
+  const bounds = map.getBounds();
+  const south = Math.floor(bounds.getSouth() / TILE_DEGREES);
+  const north = Math.floor(bounds.getNorth() / TILE_DEGREES);
+  const west = Math.floor(bounds.getWest() / TILE_DEGREES);
+  const east = Math.floor(bounds.getEast() / TILE_DEGREES);
+
+  //clear and redraw
+  for (const cell of onScreenCells) {
+    cell.rectangle.removeFrom(map);
+    cell.marker.removeFrom(map);
+  }
+
+  onScreenCells.length = 0;
+
+  //spawn cells across the visiable
+  for (let y = south; y <= north; y++) {
+    for (let x = west; x <= east; x++) {
+      spawnCell(x, y);
+    }
+  }
+}
+
 function redrawGrid() {
   //remove all the existing cells
   for (const cell of onScreenCells) {
@@ -295,3 +322,4 @@ for (let x = -SCREEN_WIDTH; x < SCREEN_WIDTH; x++) {
 
 //now we just call the redraw grid function to start up
 redrawGrid();
+updtateVisibleCells();
