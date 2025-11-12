@@ -34,7 +34,6 @@ const CLASSROOM_LATLNG = leaflet.latLng(
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
-const VIEW_DISTANCE = 50;
 const PERCENT_CHANCE = 0.30;
 
 //Singular Variable

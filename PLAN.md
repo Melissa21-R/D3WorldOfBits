@@ -24,4 +24,4 @@
 [x] Test movement across map boundaries (e.g. cross equator, prime meridian)
 [x] Verify gameplay works far from starting location (try jumping to NYC or Tokyo in code)
 [x] Be sure that cells continue to spawn when I player scrolls throughout the map
-[ ] Add one cleanup commit: extract constants, rename variables, remove debug logs
+[x] Add one cleanup commit: extract constants, rename variables, remove debug logs
