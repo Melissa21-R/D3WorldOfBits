@@ -298,6 +298,41 @@ westButton.addEventListener("click", () => {
   playerMovement(-1, 0);
 });
 
+if ("geolocation" in navigator) {
+  console.log("geolocation avalible, waiting for position...");
+  navigator.geolocation.watchPosition(
+    (position) => {
+      const { latitude, longitude, accuracy } = position.coords;
+      console.log("position: ", { latitude, longitude, accuracy });
+    },
+    (error) => {
+      console.warn("❌ Geolocation error:", error.message);
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          console.log(
+            "🛑 User denied location access. Check popup or settings.",
+          );
+          break;
+        case error.POSITION_UNAVAILABLE:
+          console.log("🌐 Location unavailable. No GPS/WiFi signal?");
+          break;
+        case error.TIMEOUT:
+          console.log(
+            "⏱️  Timeout: couldn't get location in time. Simulate in DevTools!",
+          );
+          break;
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 10000,
+    },
+  );
+} else {
+  console.log("browser does not support geolocation");
+}
+
 // Look around the player's neighborhood for caches to spawn
 //worked but now we have redraw grid so this is no longer needed since it spawns at a fixed
 /*
