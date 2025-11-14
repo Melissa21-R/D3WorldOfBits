@@ -204,14 +204,17 @@ function spawnCell(x: number, y: number) {
         inventory = cell.value;
         cell.value = 0;
         statusPanelDiv.innerHTML = "Your tokens: " + inventory.toString();
+        worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
       } else if (cell.value == inventory) {
         cell.value = cell.value + inventory;
         inventory = 0;
         statusPanelDiv.innerHTML = "No points yet...";
+        worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
       } else if (cell.value == 0) {
         cell.value = inventory;
         inventory = 0;
         statusPanelDiv.innerHTML = "No points yet...";
+        worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
       }
 
       //edit the html to display the new correct token value

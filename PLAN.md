@@ -34,11 +34,11 @@
 [x] For any cell:
 [x] If `worldState.has(key)`: use stored value
 [x] Else: compute initial state via `luck()` hashing — do **not** store until modified
-[ ] When player picks up a token:
-[ ] Set `worldState.set(key, 0)` (or delete entry if 0 means "default")
-[ ] Later: decide if storing `0` is cleaner than deletion (consistency vs. size)
-[ ] When crafting: update target cell in `worldState`
-[ ] Rebuild visible cells from scratch each time — do **not** keep DOM nodes alive
+[x] When player picks up a token:
+[x] Set `worldState.set(key, 0)` (or delete entry if 0 means "default")
+[x] Later: decide if storing `0` is cleaner than deletion (consistency vs. size)
+[x] When crafting: update target cell in `worldState`
+[x] Rebuild visible cells from scratch each time — do **not** keep DOM nodes alive
 [ ] Test: move away and back — does state persist?
 [ ] Test: craft a token, leave, return — is it still gone?
 [ ] Make sure untouched cells still use `luck()` — no premature storage
