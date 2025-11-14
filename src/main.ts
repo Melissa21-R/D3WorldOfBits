@@ -38,6 +38,8 @@ const PERCENT_CHANCE = 0.30;
 
 //Singular Variable
 let inventory = 0;
+let lastLat: number | null = null;
+let lastLng: number | null = null;
 const Starting_X = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
 const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
 const currentLocation = { x: Starting_X, y: Starting_Y };
@@ -299,28 +301,54 @@ westButton.addEventListener("click", () => {
 });
 
 if ("geolocation" in navigator) {
-  console.log("geolocation avalible, waiting for position...");
+  console.log("geolocation avalible, converting movement to grid steps...");
   navigator.geolocation.watchPosition(
     (position) => {
-      const { latitude, longitude, accuracy } = position.coords;
-      console.log("position: ", { latitude, longitude, accuracy });
+      const { latitude: lat, longitude: lng } = position.coords;
+
+      //store postition
+      if (lastLat === null || lastLng === null) {
+        console.log("first postition locked:", { lat, lng });
+        lastLat = lat;
+        lastLng = lng;
+        return;
+      }
+
+      //calculate delta in degrees
+      const deltaLat = lat - lastLat;
+      const deltaLng = lng - lastLng;
+
+      //convert to grid units (TILE_DEGREES = 1e-4 -> ~10 meters per tile)
+      const dx = Math.round(deltaLng / TILE_DEGREES);
+      const dy = Math.round(deltaLat / TILE_DEGREES);
+
+      //Ignore tiny movements (or noise)
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+        return;
+      }
+
+      //clamp movement to one tile max in any direction
+      const stepX = Math.abs(dx) > 0 ? (dx > 0 ? 1 : -1) : 0;
+      const stepY = Math.abs(dy) > 0 ? (dy > 0 ? 1 : -1) : 0;
+
+      console.log(
+        "Real-world move detected:",
+        { stepX, stepY },
+        "updating player...",
+      );
+      playerMovement(stepX, stepY);
+
+      //update last position
+      lastLat = lat;
+      lastLng = lng;
     },
     (error) => {
-      console.warn("❌ Geolocation error:", error.message);
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          console.log(
-            "🛑 User denied location access. Check popup or settings.",
-          );
-          break;
-        case error.POSITION_UNAVAILABLE:
-          console.log("🌐 Location unavailable. No GPS/WiFi signal?");
-          break;
-        case error.TIMEOUT:
-          console.log(
-            "⏱️  Timeout: couldn't get location in time. Simulate in DevTools!",
-          );
-          break;
+      if (error.code === error.TIMEOUT) {
+        console.warn("⏱️  Timeout — try refreshing or adjusting DevTools.");
+      } else if (error.code === error.PERMISSION_DENIED) {
+        console.warn("🛑 Permission denied — reload and allow location.");
+      } else {
+        console.warn("📍 Unexpected geolocation error:", error);
       }
     },
     {
@@ -330,7 +358,7 @@ if ("geolocation" in navigator) {
     },
   );
 } else {
-  console.log("browser does not support geolocation");
+  console.log("Browser does not support geolocation");
 }
 
 // Look around the player's neighborhood for caches to spawn
