@@ -157,9 +157,10 @@ function spawnCell(x: number, y: number) {
   const key = getCellKey(x, y);
 
   //spawn our values creating cells of 0's and 1's but its consistant upon reloads
+  //if the value has been changed or touched add to worldstate
   if (worldState.has(key)) {
     value = worldState.get(key)!;
-  } else {
+  } else { //otherwise generate from luck
     value = luck([x, y].toString()) < PERCENT_CHANCE ? 1 : 0;
   }
 
@@ -204,16 +205,19 @@ function spawnCell(x: number, y: number) {
         inventory = cell.value;
         cell.value = 0;
         statusPanelDiv.innerHTML = "Your tokens: " + inventory.toString();
+        //add to worldState if pickedup
         worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
       } else if (cell.value == inventory) {
         cell.value = cell.value + inventory;
         inventory = 0;
         statusPanelDiv.innerHTML = "No points yet...";
+        //add to worldstate if crafted
         worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
       } else if (cell.value == 0) {
         cell.value = inventory;
         inventory = 0;
         statusPanelDiv.innerHTML = "No points yet...";
+        //add to world state if placed in an empty cell
         worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
       }
 

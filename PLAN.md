@@ -39,7 +39,7 @@
 [x] Later: decide if storing `0` is cleaner than deletion (consistency vs. size)
 [x] When crafting: update target cell in `worldState`
 [x] Rebuild visible cells from scratch each time — do **not** keep DOM nodes alive
-[ ] Test: move away and back — does state persist?
-[ ] Test: craft a token, leave, return — is it still gone?
-[ ] Make sure untouched cells still use `luck()` — no premature storage
-[ ] Add one cleanup commit: remove unused variables, debug logs
+[x] Test: move away and back — does state persist?
+[x] Test: craft a token, leave, return — is it still gone?
+[x] Make sure untouched cells still use `luck()` — no premature storage
+[x] Add one cleanup commit: remove unused variables, debug logs
