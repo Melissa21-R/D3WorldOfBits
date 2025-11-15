@@ -40,6 +40,8 @@ const PERCENT_CHANCE = 0.30;
 let inventory = 0;
 let lastLat: number | null = null;
 let lastLng: number | null = null;
+let lastUpdateTime = 0;
+const THROTTLE_MS = 1000; //max once per second
 const Starting_X = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
 const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
 const currentLocation = { x: Starting_X, y: Starting_Y };
@@ -304,6 +306,21 @@ if ("geolocation" in navigator) {
   console.log("geolocation avalible, converting movement to grid steps...");
   navigator.geolocation.watchPosition(
     (position) => {
+      //get the current location of the player
+      const { latitude, longitude } = position.coords;
+      currentLocation.x = Math.floor(longitude / TILE_DEGREES);
+      currentLocation.y = Math.floor(latitude / TILE_DEGREES);
+
+      map.setView([latitude, longitude], GAMEPLAY_ZOOM_LEVEL);
+      playerMarker.setLatLng([latitude, longitude]);
+      updateVisibleCells();
+
+      const now = Date.now();
+      if (now - lastUpdateTime < THROTTLE_MS) {
+        return; //throttles
+      }
+      lastUpdateTime = now;
+
       const { latitude: lat, longitude: lng } = position.coords;
 
       //store postition
@@ -344,11 +361,11 @@ if ("geolocation" in navigator) {
     },
     (error) => {
       if (error.code === error.TIMEOUT) {
-        console.warn("⏱️  Timeout — try refreshing or adjusting DevTools.");
+        console.warn("Timeout — try refreshing or adjusting DevTools.");
       } else if (error.code === error.PERMISSION_DENIED) {
-        console.warn("🛑 Permission denied — reload and allow location.");
+        console.warn("Permission denied — reload and allow location.");
       } else {
-        console.warn("📍 Unexpected geolocation error:", error);
+        console.warn("Unexpected geolocation error:", error);
       }
     },
     {
