@@ -46,20 +46,20 @@
 
 ## D3.d: Gameplay Across Real-world Space and Time
 
-[x] Switch movement source to geolocation: use `navigator.geolocation.watchPosition()` to detect real-world movement\
-[x] Calculate positional delta (lat/lng) between updates and convert to grid movement (dx, dy)\
-[x] Throttle movement updates to avoid excessive changes (~1000ms interval)\
-[ ] Create `MovementController` interface with `subscribe` and `unsubscribe` methods\
-[ ] Implement `ButtonMovementController` class that fires movement events from buttons\
-[ ] Implement `GeolocationMovementController` class that fires movement events from GPS changes\
-[ ] Apply Facade pattern: game logic depends only on `MovementController`, not concrete implementations\
-[ ] Read URL query string (e.g. `?movement=geolocation`) to select movement mode at start\
-[ ] Add on-screen toggle button to switch between geolocation and button controls\
-[ ] Ensure toggle persists or resets cleanly (consider UX flow)\
-[ ] Save game state (`playerPosition`, `movementMode`, etc.) to `localStorage` on change\
-[ ] Load game state from `localStorage` on page load — resume where left off\
-[ ] Add "New Game" button that clears `localStorage` and resets state\
-[ ] Test geolocation mode using Chrome DevTools > Sensors (simulate movement)\
-[ ] Test persistence: reload page, close tab, return — should restore state\
-[ ] Deploy to GitHub Pages (required for HTTPS → geolocation works)\
+[x] Switch movement source to geolocation: use `navigator.geolocation.watchPosition()` to detect real-world movement
+[x] Calculate positional delta (lat/lng) between updates and convert to grid movement (dx, dy)
+[x] Throttle movement updates to avoid excessive changes (~1000ms interval)
+[x] Apply Facade pattern: game logic depends only on `MovementController`, not concrete implementations
+[x] Create `MovementController` interface with `subscribe` and `unsubscribe` methods
+[x] Implement `ButtonMovementController` class that fires movement events from buttons
+[ ] Implement `GeolocationMovementController` class that fires movement events from GPS changes
+[ ] Read URL query string (e.g. `?movement=geolocation`) to select movement mode at start
+[ ] Add on-screen toggle button to switch between geolocation and button controls
+[ ] Ensure toggle persists or resets cleanly (consider UX flow)
+[ ] Save game state (`playerPosition`, `movementMode`, etc.) to `localStorage` on change
+[ ] Load game state from `localStorage` on page load — resume where left off
+[ ] Add "New Game" button that clears `localStorage` and resets state
+[ ] Test geolocation mode using Chrome DevTools > Sensors (simulate movement)
+[ ] Test persistence: reload page, close tab, return — should restore state
+[ ] Deploy to GitHub Pages (required for HTTPS → geolocation works)
 [ ] Verify gameplay works across real-world locations (simulate NYC, Tokyo, etc.)

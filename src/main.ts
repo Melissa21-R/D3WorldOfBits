@@ -50,32 +50,6 @@ const onScreenCells: Cell[] = [];
 //persistent world state: only stores cells that have been changed by the player
 const worldState = new Map<string, number>();
 
-//lets test if I can cross the equator and prime meridian, as well as far distance
-
-/*
-Lets test the Equator first
-- Can I move smoothly and do cells still spawn? (yes they do!)
-const testX = Math.floor(-55 / TILE_DEGREES); //Amazon Rainforest
-const testY = Math.floor(0.001 / TILE_DEGREES);
-const currentLocation = { x: testX, y: testY };
-*/
-
-/*
-Lets test the Prime Meridian
-- Can I move smoothly and do cells still spawn? (yes they do!)
-const testX = Math.floor(0.001 / TILE_DEGREES);
-const testY = Math.floor(51.5 / TILE_DEGREES); //london
-const currentLocation = { x: testX, y: testY };
-*/
-
-/*
-Lets test from a far distance now, like tokyo
--can I move smoothly and do cells still spawn? (yes they do!)
-const testX = Math.floor(139.691 / TILE_DEGREES); //Tokyo
-const testY = Math.floor(35.689 / TILE_DEGREES);
-const currentLocation = { x: testX, y: testY };
-*/
-
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
   center: [currentLocation.y * TILE_DEGREES, currentLocation.x * TILE_DEGREES],
@@ -85,19 +59,6 @@ const map = leaflet.map(mapDiv, {
   zoomControl: false,
   scrollWheelZoom: false,
 });
-
-//first define the interface of cell
-interface Cell {
-  rectangle: leaflet.Rectangle;
-  marker: leaflet.Marker;
-  xCoord: number;
-  yCoord: number;
-  value: number;
-}
-
-interface MovementController {
-  onMove(dx: number, dy: number): void;
-}
 
 //button UI lay out all my movement buttons
 const northButton = document.createElement("button");
@@ -120,6 +81,34 @@ westButton.textContent = "<- West";
 westButton.id = "westButton";
 controlPanelDiv.appendChild(westButton);
 
+// Add a marker to represent the player
+const playerMarker = leaflet.marker([
+  currentLocation.y * TILE_DEGREES,
+  currentLocation.x * TILE_DEGREES,
+]);
+
+//first define the interface of cell
+interface Cell {
+  rectangle: leaflet.Rectangle;
+  marker: leaflet.Marker;
+  xCoord: number;
+  yCoord: number;
+  value: number;
+}
+
+interface MovementController {
+  subscribe(callback: (dx: number, dy: number) => void): void;
+  unsubscribe(callback: (dx: number, dy: number) => void): void;
+}
+
+//display playerMarker
+playerMarker.bindTooltip("That's you!");
+playerMarker.addTo(map);
+
+// Display the player's points
+//let tokenValue = 0;
+statusPanelDiv.innerHTML = "No points yet...";
+
 // Populate the map with a background tile layer
 leaflet
   .tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -129,17 +118,122 @@ leaflet
   })
   .addTo(map);
 
-// Add a marker to represent the player
-const playerMarker = leaflet.marker([
-  currentLocation.y * TILE_DEGREES,
-  currentLocation.x * TILE_DEGREES,
-]);
-playerMarker.bindTooltip("That's you!");
-playerMarker.addTo(map);
+//truns button clics into grid-based movement events
+class ButtonMovementController implements MovementController {
+  //keeps a list of functions that want to be notofied when movement happens
+  private callbacks: ((dx: number, dy: number) => void)[] = [];
 
-// Display the player's points
-//let tokenValue = 0;
-statusPanelDiv.innerHTML = "No points yet...";
+  //another part of the game signs up to be told when buttons are pressed
+  subscribe(callback: (DOMException: number, dy: number) => void) {
+    this.callbacks.push(callback);
+  }
+
+  //remove a function from the mailing list
+  //good for when switching input modes or cleaning up.
+  unsubscribe(callback: (dx: number, dy: number) => void) {
+    const index = this.callbacks.indexOf(callback);
+    if (index !== -1) {
+      this.callbacks.splice(index, 1);
+    }
+  }
+
+  //send a movement event to everyone whos listening
+  //called when button is clicked
+  private emit(dx: number, dy: number) {
+    this.callbacks.forEach((cb) => cb(dx, dy));
+  }
+
+  //set up event listeners on the four direction buttons
+  init() {
+    const north = document.getElementById("northButton")!;
+    const south = document.getElementById("southButton")!;
+    const east = document.getElementById("eastButton")!;
+    const west = document.getElementById("westButton")!;
+
+    north.addEventListener("click", () => this.emit(0, 1));
+    south.addEventListener("click", () => this.emit(0, -1));
+    east.addEventListener("click", () => this.emit(1, 0));
+    west.addEventListener("click", () => this.emit(-1, 0));
+  }
+}
+
+//called for the sake of a never used error for pushing
+ButtonMovementController;
+if ("geolocation" in navigator) {
+  console.log("geolocation avalible, converting movement to grid steps...");
+  navigator.geolocation.watchPosition(
+    (position) => {
+      //get the current location of the player
+      const { latitude, longitude } = position.coords;
+      currentLocation.x = Math.floor(longitude / TILE_DEGREES);
+      currentLocation.y = Math.floor(latitude / TILE_DEGREES);
+
+      map.setView([latitude, longitude], GAMEPLAY_ZOOM_LEVEL);
+      playerMarker.setLatLng([latitude, longitude]);
+      updateVisibleCells();
+
+      const now = Date.now();
+      if (now - lastUpdateTime < THROTTLE_MS) {
+        return; //throttles
+      }
+      lastUpdateTime = now;
+
+      const { latitude: lat, longitude: lng } = position.coords;
+
+      //store postition
+      if (lastLat === null || lastLng === null) {
+        console.log("first postition locked:", { lat, lng });
+        lastLat = lat;
+        lastLng = lng;
+        return;
+      }
+
+      //calculate delta in degrees
+      const deltaLat = lat - lastLat;
+      const deltaLng = lng - lastLng;
+
+      //convert to grid units (TILE_DEGREES = 1e-4 -> ~10 meters per tile)
+      const dx = Math.round(deltaLng / TILE_DEGREES);
+      const dy = Math.round(deltaLat / TILE_DEGREES);
+
+      //Ignore tiny movements (or noise)
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+        return;
+      }
+
+      //clamp movement to one tile max in any direction
+      const stepX = Math.abs(dx) > 0 ? (dx > 0 ? 1 : -1) : 0;
+      const stepY = Math.abs(dy) > 0 ? (dy > 0 ? 1 : -1) : 0;
+
+      console.log(
+        "Real-world move detected:",
+        { stepX, stepY },
+        "updating player...",
+      );
+      playerMovement(stepX, stepY);
+
+      //update last position
+      lastLat = lat;
+      lastLng = lng;
+    },
+    (error) => {
+      if (error.code === error.TIMEOUT) {
+        console.warn("Timeout — try refreshing or adjusting DevTools.");
+      } else if (error.code === error.PERMISSION_DENIED) {
+        console.warn("Permission denied — reload and allow location.");
+      } else {
+        console.warn("Unexpected geolocation error:", error);
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 10000,
+    },
+  );
+} else {
+  console.log("Browser does not support geolocation");
+}
 
 //a helper function that will convert world  coords to a grid-aligned key string
 function getCellKey(x: number, y: number): string {
@@ -305,93 +399,6 @@ eastButton.addEventListener("click", () => {
 westButton.addEventListener("click", () => {
   playerMovement(-1, 0);
 });
-
-if ("geolocation" in navigator) {
-  console.log("geolocation avalible, converting movement to grid steps...");
-  navigator.geolocation.watchPosition(
-    (position) => {
-      //get the current location of the player
-      const { latitude, longitude } = position.coords;
-      currentLocation.x = Math.floor(longitude / TILE_DEGREES);
-      currentLocation.y = Math.floor(latitude / TILE_DEGREES);
-
-      map.setView([latitude, longitude], GAMEPLAY_ZOOM_LEVEL);
-      playerMarker.setLatLng([latitude, longitude]);
-      updateVisibleCells();
-
-      const now = Date.now();
-      if (now - lastUpdateTime < THROTTLE_MS) {
-        return; //throttles
-      }
-      lastUpdateTime = now;
-
-      const { latitude: lat, longitude: lng } = position.coords;
-
-      //store postition
-      if (lastLat === null || lastLng === null) {
-        console.log("first postition locked:", { lat, lng });
-        lastLat = lat;
-        lastLng = lng;
-        return;
-      }
-
-      //calculate delta in degrees
-      const deltaLat = lat - lastLat;
-      const deltaLng = lng - lastLng;
-
-      //convert to grid units (TILE_DEGREES = 1e-4 -> ~10 meters per tile)
-      const dx = Math.round(deltaLng / TILE_DEGREES);
-      const dy = Math.round(deltaLat / TILE_DEGREES);
-
-      //Ignore tiny movements (or noise)
-      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
-        return;
-      }
-
-      //clamp movement to one tile max in any direction
-      const stepX = Math.abs(dx) > 0 ? (dx > 0 ? 1 : -1) : 0;
-      const stepY = Math.abs(dy) > 0 ? (dy > 0 ? 1 : -1) : 0;
-
-      console.log(
-        "Real-world move detected:",
-        { stepX, stepY },
-        "updating player...",
-      );
-      playerMovement(stepX, stepY);
-
-      //update last position
-      lastLat = lat;
-      lastLng = lng;
-    },
-    (error) => {
-      if (error.code === error.TIMEOUT) {
-        console.warn("Timeout — try refreshing or adjusting DevTools.");
-      } else if (error.code === error.PERMISSION_DENIED) {
-        console.warn("Permission denied — reload and allow location.");
-      } else {
-        console.warn("Unexpected geolocation error:", error);
-      }
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 1000,
-      timeout: 10000,
-    },
-  );
-} else {
-  console.log("Browser does not support geolocation");
-}
-
-// Look around the player's neighborhood for caches to spawn
-//worked but now we have redraw grid so this is no longer needed since it spawns at a fixed
-/*
-for (let x = -SCREEN_WIDTH; x < SCREEN_WIDTH; x++) {
-  for (let y = -SCREEN_HEIGHT; y < SCREEN_HEIGHT; y++) {
-    // If location i,j is lucky enough, spawn a cache!
-    spawnCell(x, y);
-  }
-}
-*/
 
 //now we just call the redraw grid function to start up
 updateVisibleCells();
