@@ -52,7 +52,7 @@
 [x] Apply Facade pattern: game logic depends only on `MovementController`, not concrete implementations
 [x] Create `MovementController` interface with `subscribe` and `unsubscribe` methods
 [x] Implement `ButtonMovementController` class that fires movement events from buttons
-[ ] Implement `GeolocationMovementController` class that fires movement events from GPS changes
+[x] Implement `GeolocationMovementController` class that fires movement events from GPS changes
 [ ] Read URL query string (e.g. `?movement=geolocation`) to select movement mode at start
 [ ] Add on-screen toggle button to switch between geolocation and button controls
 [ ] Ensure toggle persists or resets cleanly (consider UX flow)

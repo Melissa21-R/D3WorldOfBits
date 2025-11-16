@@ -40,7 +40,6 @@ const PERCENT_CHANCE = 0.30;
 let inventory = 0;
 let lastLat: number | null = null;
 let lastLng: number | null = null;
-let lastUpdateTime = 0;
 const THROTTLE_MS = 1000; //max once per second
 const Starting_X = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
 const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
@@ -124,7 +123,7 @@ class ButtonMovementController implements MovementController {
   private callbacks: ((dx: number, dy: number) => void)[] = [];
 
   //another part of the game signs up to be told when buttons are pressed
-  subscribe(callback: (DOMException: number, dy: number) => void) {
+  subscribe(callback: (dx: number, dy: number) => void) {
     this.callbacks.push(callback);
   }
 
@@ -157,83 +156,98 @@ class ButtonMovementController implements MovementController {
   }
 }
 
-//called for the sake of a never used error for pushing
-ButtonMovementController;
-if ("geolocation" in navigator) {
-  console.log("geolocation avalible, converting movement to grid steps...");
-  navigator.geolocation.watchPosition(
-    (position) => {
-      //get the current location of the player
-      const { latitude, longitude } = position.coords;
-      currentLocation.x = Math.floor(longitude / TILE_DEGREES);
-      currentLocation.y = Math.floor(latitude / TILE_DEGREES);
+class GeolocationMovementController implements MovementController {
+  private callbacks: ((dx: number, dy: number) => void)[] = [];
+  private watchId: number | null = null;
+  private lastLat: number | null = null;
+  private lastLng: number | null = null;
+  private lastUpdateTime = 0;
+  private readonly THROTTLE_MS = 1000;
 
-      map.setView([latitude, longitude], GAMEPLAY_ZOOM_LEVEL);
-      playerMarker.setLatLng([latitude, longitude]);
-      updateVisibleCells();
+  subscribe(callback: (dx: number, dy: number) => void): void {
+    this.callbacks.push(callback);
+  }
 
-      const now = Date.now();
-      if (now - lastUpdateTime < THROTTLE_MS) {
-        return; //throttles
-      }
-      lastUpdateTime = now;
+  unsubscribe(callback: (dx: number, dy: number) => void): void {
+    const index = this.callbacks.indexOf(callback);
+    if (index !== -1) this.callbacks.splice(index, 1);
+  }
 
-      const { latitude: lat, longitude: lng } = position.coords;
+  private emit(dx: number, dy: number) {
+    this.callbacks.forEach((cb) => cb(dx, dy));
+  }
 
-      //store postition
-      if (lastLat === null || lastLng === null) {
-        console.log("first postition locked:", { lat, lng });
-        lastLat = lat;
-        lastLng = lng;
-        return;
-      }
+  start() {
+    if ("geolocation" in navigator) {
+      console.log("geolocation avalible, converting movement to grid steps...");
+      navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude: lat, longitude: lng } = position.coords;
+          const now = Date.now();
+          if (now - this.lastUpdateTime < THROTTLE_MS) {
+            return; //throttles
+          }
+          this.lastUpdateTime = now;
 
-      //calculate delta in degrees
-      const deltaLat = lat - lastLat;
-      const deltaLng = lng - lastLng;
+          //store postition
+          if (lastLat === null || lastLng === null) {
+            console.log("first postition locked:", { lat, lng });
+            lastLat = lat;
+            lastLng = lng;
+            return;
+          }
 
-      //convert to grid units (TILE_DEGREES = 1e-4 -> ~10 meters per tile)
-      const dx = Math.round(deltaLng / TILE_DEGREES);
-      const dy = Math.round(deltaLat / TILE_DEGREES);
+          //calculate delta in degrees
+          const deltaLat = lat - lastLat;
+          const deltaLng = lng - lastLng;
 
-      //Ignore tiny movements (or noise)
-      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
-        return;
-      }
+          //convert to grid units (TILE_DEGREES = 1e-4 -> ~10 meters per tile)
+          const dx = Math.round(deltaLng / TILE_DEGREES);
+          const dy = Math.round(deltaLat / TILE_DEGREES);
 
-      //clamp movement to one tile max in any direction
-      const stepX = Math.abs(dx) > 0 ? (dx > 0 ? 1 : -1) : 0;
-      const stepY = Math.abs(dy) > 0 ? (dy > 0 ? 1 : -1) : 0;
+          //Ignore tiny movements (or noise)
+          if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+            return;
+          }
 
-      console.log(
-        "Real-world move detected:",
-        { stepX, stepY },
-        "updating player...",
+          //clamp movement to one tile max in any direction
+          const stepX = Math.abs(dx) > 0 ? (dx > 0 ? 1 : -1) : 0;
+          const stepY = Math.abs(dy) > 0 ? (dy > 0 ? 1 : -1) : 0;
+
+          this.emit(stepX, stepY);
+
+          //update last position
+          lastLat = lat;
+          lastLng = lng;
+        },
+        (error) => {
+          if (error.code === error.TIMEOUT) {
+            console.warn("Timeout — try refreshing or adjusting DevTools.");
+          } else if (error.code === error.PERMISSION_DENIED) {
+            console.warn("Permission denied — reload and allow location.");
+          } else {
+            console.warn("Unexpected geolocation error:", error);
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 1000,
+          timeout: 10000,
+        },
       );
-      playerMovement(stepX, stepY);
-
-      //update last position
-      lastLat = lat;
-      lastLng = lng;
-    },
-    (error) => {
-      if (error.code === error.TIMEOUT) {
-        console.warn("Timeout — try refreshing or adjusting DevTools.");
-      } else if (error.code === error.PERMISSION_DENIED) {
-        console.warn("Permission denied — reload and allow location.");
-      } else {
-        console.warn("Unexpected geolocation error:", error);
-      }
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 1000,
-      timeout: 10000,
-    },
-  );
-} else {
-  console.log("Browser does not support geolocation");
+    } else {
+      console.log("Browser does not support geolocation");
+    }
+  }
 }
+
+const buttonMove = new ButtonMovementController();
+buttonMove.subscribe(playerMovement);
+buttonMove.init();
+
+const geoController = new GeolocationMovementController();
+geoController.subscribe(playerMovement);
+geoController.start();
 
 //a helper function that will convert world  coords to a grid-aligned key string
 function getCellKey(x: number, y: number): string {
@@ -382,23 +396,6 @@ function playerMovement(dx: number, dy: number) {
   //redraw the grid upon movement
   updateVisibleCells();
 }
-
-//call playermovement when putton is pressed to simulate movement
-northButton.addEventListener("click", () => {
-  playerMovement(0, 1);
-});
-
-southButton.addEventListener("click", () => {
-  playerMovement(0, -1);
-});
-
-eastButton.addEventListener("click", () => {
-  playerMovement(1, 0);
-});
-
-westButton.addEventListener("click", () => {
-  playerMovement(-1, 0);
-});
 
 //now we just call the redraw grid function to start up
 updateVisibleCells();
