@@ -95,6 +95,10 @@ interface Cell {
   value: number;
 }
 
+interface MovementController {
+  onMove(dx: number, dy: number): void;
+}
+
 //button UI lay out all my movement buttons
 const northButton = document.createElement("button");
 northButton.textContent = "↑ North";

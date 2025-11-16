@@ -48,7 +48,7 @@
 
 [x] Switch movement source to geolocation: use `navigator.geolocation.watchPosition()` to detect real-world movement\
 [x] Calculate positional delta (lat/lng) between updates and convert to grid movement (dx, dy)\
-[ ] Throttle movement updates to avoid excessive changes (~1000ms interval)\
+[x] Throttle movement updates to avoid excessive changes (~1000ms interval)\
 [ ] Create `MovementController` interface with `subscribe` and `unsubscribe` methods\
 [ ] Implement `ButtonMovementController` class that fires movement events from buttons\
 [ ] Implement `GeolocationMovementController` class that fires movement events from GPS changes\
