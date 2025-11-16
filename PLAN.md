@@ -53,9 +53,9 @@
 [x] Create `MovementController` interface with `subscribe` and `unsubscribe` methods
 [x] Implement `ButtonMovementController` class that fires movement events from buttons
 [x] Implement `GeolocationMovementController` class that fires movement events from GPS changes
-[ ] Read URL query string (e.g. `?movement=geolocation`) to select movement mode at start
-[ ] Add on-screen toggle button to switch between geolocation and button controls
-[ ] Ensure toggle persists or resets cleanly (consider UX flow)
+[x] Read URL query string (e.g. `?movement=geolocation`) to select movement mode at start
+[x] Add on-screen toggle button to switch between geolocation and button controls
+[x] Ensure toggle persists or resets cleanly (consider UX flow)
 [ ] Save game state (`playerPosition`, `movementMode`, etc.) to `localStorage` on change
 [ ] Load game state from `localStorage` on page load — resume where left off
 [ ] Add "New Game" button that clears `localStorage` and resets state

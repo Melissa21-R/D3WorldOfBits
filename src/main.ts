@@ -38,13 +38,14 @@ const PERCENT_CHANCE = 0.30;
 
 //Singular Variable
 let inventory = 0;
-let lastLat: number | null = null;
-let lastLng: number | null = null;
 const THROTTLE_MS = 1000; //max once per second
 const Starting_X = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
 const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
 const currentLocation = { x: Starting_X, y: Starting_Y };
 const onScreenCells: Cell[] = [];
+const urlParams = new URLSearchParams(globalThis.location.search);
+const movementMode = urlParams.get("movement") || "button";
+let movementController: MovementController | null = null;
 
 //persistent world state: only stores cells that have been changed by the player
 const worldState = new Map<string, number>();
@@ -79,6 +80,12 @@ const westButton = document.createElement("button");
 westButton.textContent = "<- West";
 westButton.id = "westButton";
 controlPanelDiv.appendChild(westButton);
+
+const toggleButton = document.createElement("button");
+toggleButton.textContent = movementMode === "geolocation"
+  ? "Switch to Buttons"
+  : "Switch to GPS";
+controlPanelDiv.appendChild(toggleButton);
 
 // Add a marker to represent the player
 const playerMarker = leaflet.marker([
@@ -177,6 +184,13 @@ class GeolocationMovementController implements MovementController {
     this.callbacks.forEach((cb) => cb(dx, dy));
   }
 
+  stop() {
+    if (this.watchId !== null) {
+      navigator.geolocation.clearWatch(this.watchId);
+      this.watchId = null;
+    }
+  }
+
   start() {
     if ("geolocation" in navigator) {
       console.log("geolocation avalible, converting movement to grid steps...");
@@ -190,16 +204,16 @@ class GeolocationMovementController implements MovementController {
           this.lastUpdateTime = now;
 
           //store postition
-          if (lastLat === null || lastLng === null) {
+          if (this.lastLat === null || this.lastLng === null) {
             console.log("first postition locked:", { lat, lng });
-            lastLat = lat;
-            lastLng = lng;
+            this.lastLat = lat;
+            this.lastLng = lng;
             return;
           }
 
           //calculate delta in degrees
-          const deltaLat = lat - lastLat;
-          const deltaLng = lng - lastLng;
+          const deltaLat = lat - this.lastLat;
+          const deltaLng = lng - this.lastLng;
 
           //convert to grid units (TILE_DEGREES = 1e-4 -> ~10 meters per tile)
           const dx = Math.round(deltaLng / TILE_DEGREES);
@@ -217,8 +231,8 @@ class GeolocationMovementController implements MovementController {
           this.emit(stepX, stepY);
 
           //update last position
-          lastLat = lat;
-          lastLng = lng;
+          this.lastLat = lat;
+          this.lastLng = lng;
         },
         (error) => {
           if (error.code === error.TIMEOUT) {
@@ -240,14 +254,6 @@ class GeolocationMovementController implements MovementController {
     }
   }
 }
-
-const buttonMove = new ButtonMovementController();
-buttonMove.subscribe(playerMovement);
-buttonMove.init();
-
-const geoController = new GeolocationMovementController();
-geoController.subscribe(playerMovement);
-geoController.start();
 
 //a helper function that will convert world  coords to a grid-aligned key string
 function getCellKey(x: number, y: number): string {
@@ -396,6 +402,68 @@ function playerMovement(dx: number, dy: number) {
   //redraw the grid upon movement
   updateVisibleCells();
 }
+
+function setMovementController(controller: MovementController) {
+  //unsubscribe from old
+  if (movementController) {
+    movementController.unsubscribe(playerMovement);
+  }
+
+  //stop GPS if needed
+  if (movementController instanceof GeolocationMovementController) {
+    (movementController as GeolocationMovementController).stop();
+  }
+
+  //subscribe new
+  controller.subscribe(playerMovement);
+  movementController = controller;
+
+  //start GPS is needed
+  if (controller instanceof GeolocationMovementController) {
+    (controller as GeolocationMovementController).start();
+  }
+
+  //reflect mode in UI
+  toggleButton.textContent = controller instanceof GeolocationMovementController
+    ? "Switch to Buttons"
+    : "Switch to GPS";
+
+  //update URl Query param
+  const url = new URL(globalThis.location.href);
+  const mode = controller instanceof GeolocationMovementController
+    ? "geolocation"
+    : "button";
+  url.searchParams.set("movement", mode);
+  globalThis.history.replaceState({}, "", url);
+}
+
+//at runtime parse the URL and choose which controller to use
+if (movementMode === "geolocation") {
+  const geoController = new GeolocationMovementController();
+  geoController.start();
+  setMovementController(geoController);
+} else {
+  const buttonMove = new ButtonMovementController();
+  buttonMove.init();
+  setMovementController(buttonMove);
+}
+
+toggleButton.addEventListener("click", () => {
+  if (movementController instanceof GeolocationMovementController) {
+    //switch buttons
+    const buttonController = new ButtonMovementController();
+    buttonController.init();
+    setMovementController(buttonController);
+  } else {
+    //switch to gps
+    if ("geolocation" in navigator) {
+      const geoController = new GeolocationMovementController();
+      setMovementController(geoController);
+    } else {
+      alert("Geolocation not supported");
+    }
+  }
+});
 
 //now we just call the redraw grid function to start up
 updateVisibleCells();
