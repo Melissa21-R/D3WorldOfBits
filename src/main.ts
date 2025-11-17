@@ -39,17 +39,16 @@ const PERCENT_CHANCE = 0.30;
 //Singular Variable
 let inventory = 0;
 const THROTTLE_MS = 1000; //max once per second
-const Starting_X = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
-const Starting_Y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
-const currentLocation = { x: Starting_X, y: Starting_Y };
+
+const currentLocation = { x: 0, y: 0 };
 const onScreenCells: Cell[] = [];
 const urlParams = new URLSearchParams(globalThis.location.search);
 const movementMode = urlParams.get("movement") || "button";
 let movementController: MovementController | null = null;
-const savedState = loadState();
 
 //persistent world state: only stores cells that have been changed by the player
 const worldState = new Map<string, number>();
+const savedState = loadState();
 
 // Create the map (element with id "map" is defined in index.html)
 const map = leaflet.map(mapDiv, {
@@ -474,37 +473,6 @@ function setMovementController(controller: MovementController) {
   saveState();
 }
 
-//at runtime parse the URL and choose which controller to use
-if (movementMode === "geolocation") {
-  const geoController = new GeolocationMovementController();
-  geoController.start();
-  setMovementController(geoController);
-} else {
-  const buttonMove = new ButtonMovementController();
-  buttonMove.init();
-  setMovementController(buttonMove);
-}
-
-if (savedState) {
-  //restore game state
-  currentLocation.x = savedState.playerPosition.x;
-  currentLocation.y = savedState.playerPosition.y;
-  inventory = savedState.inventory;
-
-  //restore world state
-  worldState.clear();
-  for (const [key, value] of savedState.worldState) {
-    worldState.set(key, value);
-  }
-
-  //update UI to match inventory
-  if (inventory > 0) {
-    statusPanelDiv.innerHTML = "Your held Token value: " + inventory.toString();
-  } else {
-    statusPanelDiv.innerHTML = "No held Token...";
-  }
-}
-
 //movement controller button event handler
 toggleButton.addEventListener("click", () => {
   if (movementController instanceof GeolocationMovementController) {
@@ -534,8 +502,8 @@ newGameButton.addEventListener("click", () => {
     worldState.clear();
 
     //reset to starting position
-    currentLocation.x = Starting_X;
-    currentLocation.y = Starting_Y;
+    currentLocation.x = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
+    currentLocation.y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
 
     //update player marker and map view
     const newLat = currentLocation.y * TILE_DEGREES;
@@ -550,6 +518,48 @@ newGameButton.addEventListener("click", () => {
     updateVisibleCells();
   }
 });
+
+if (savedState) {
+  //restore game state
+  currentLocation.x = savedState.playerPosition.x;
+  currentLocation.y = savedState.playerPosition.y;
+  inventory = savedState.inventory;
+
+  //restore world state
+  worldState.clear();
+  for (const [key, value] of savedState.worldState) {
+    worldState.set(key, value);
+  }
+
+  //update UI to match inventory
+  if (inventory > 0) {
+    statusPanelDiv.innerHTML = "Your held Token value: " + inventory.toString();
+  } else {
+    statusPanelDiv.innerHTML = "No held Token...";
+  }
+} else {
+  currentLocation.x = Math.floor(CLASSROOM_LATLNG.lng / TILE_DEGREES);
+  currentLocation.y = Math.floor(CLASSROOM_LATLNG.lat / TILE_DEGREES);
+}
+
+playerMarker.setLatLng([
+  currentLocation.y * TILE_DEGREES,
+  currentLocation.x * TILE_DEGREES,
+]);
+map.setView([
+  currentLocation.y * TILE_DEGREES,
+  currentLocation.x * TILE_DEGREES,
+]);
+
+//at runtime parse the URL and choose which controller to use
+if (movementMode === "geolocation") {
+  const geoController = new GeolocationMovementController();
+  setMovementController(geoController);
+} else {
+  const buttonMove = new ButtonMovementController();
+  setMovementController(buttonMove);
+  buttonMove.init();
+}
 
 //now we just call the redraw grid function to start up
 updateVisibleCells();

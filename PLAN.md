@@ -60,6 +60,6 @@
 [x] Load game state from `localStorage` on page load — resume where left off
 [x] Add "New Game" button that clears `localStorage` and resets state
 [ ] Test geolocation mode using Chrome DevTools > Sensors (simulate movement)
-[ ] Test persistence: reload page, close tab, return — should restore state
+[x] Test persistence: reload page, close tab, return — should restore state
 [ ] Deploy to GitHub Pages (required for HTTPS → geolocation works)
 [ ] Verify gameplay works across real-world locations (simulate NYC, Tokyo, etc.)
