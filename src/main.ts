@@ -46,6 +46,7 @@ const onScreenCells: Cell[] = [];
 const urlParams = new URLSearchParams(globalThis.location.search);
 const movementMode = urlParams.get("movement") || "button";
 let movementController: MovementController | null = null;
+const savedState = loadState();
 
 //persistent world state: only stores cells that have been changed by the player
 const worldState = new Map<string, number>();
@@ -87,6 +88,9 @@ toggleButton.textContent = movementMode === "geolocation"
   : "Switch to GPS";
 controlPanelDiv.appendChild(toggleButton);
 
+const newGameButton = document.createElement("button");
+newGameButton.textContent = "New Game";
+
 // Add a marker to represent the player
 const playerMarker = leaflet.marker([
   currentLocation.y * TILE_DEGREES,
@@ -107,13 +111,21 @@ interface MovementController {
   unsubscribe(callback: (dx: number, dy: number) => void): void;
 }
 
+//set game state to save
+type GameState = {
+  playerPosition: { x: number; y: number };
+  inventory: number;
+  movementMode: string;
+  worldState: [string, number][];
+};
+
 //display playerMarker
 playerMarker.bindTooltip("That's you!");
 playerMarker.addTo(map);
 
 // Display the player's points
 //let tokenValue = 0;
-statusPanelDiv.innerHTML = "No points yet...";
+statusPanelDiv.innerHTML = "No held Token...";
 
 // Populate the map with a background tile layer
 leaflet
@@ -326,21 +338,25 @@ function spawnCell(x: number, y: number) {
       if (cell.value != 0 && inventory == 0) {
         inventory = cell.value;
         cell.value = 0;
-        statusPanelDiv.innerHTML = "Your tokens: " + inventory.toString();
+        statusPanelDiv.innerHTML = "Your held token value: " +
+          inventory.toString();
         //add to worldState if pickedup
         worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
+        saveState();
       } else if (cell.value == inventory) {
         cell.value = cell.value + inventory;
         inventory = 0;
-        statusPanelDiv.innerHTML = "No points yet...";
+        statusPanelDiv.innerHTML = "No held Token...";
         //add to worldstate if crafted
         worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
+        saveState();
       } else if (cell.value == 0) {
         cell.value = inventory;
         inventory = 0;
-        statusPanelDiv.innerHTML = "No points yet...";
+        statusPanelDiv.innerHTML = "No held Token...";
         //add to world state if placed in an empty cell
         worldState.set(getCellKey(cell.xCoord, cell.yCoord), cell.value);
+        saveState();
       }
 
       //edit the html to display the new correct token value
@@ -401,6 +417,25 @@ function playerMovement(dx: number, dy: number) {
 
   //redraw the grid upon movement
   updateVisibleCells();
+  saveState();
+}
+
+function saveState() {
+  const state: GameState = {
+    playerPosition: { x: currentLocation.x, y: currentLocation.y },
+    inventory,
+    movementMode: movementController instanceof GeolocationMovementController
+      ? "geolocation"
+      : "button",
+    worldState: Array.from(worldState.entries()),
+  };
+  localStorage.setItem("gameState", JSON.stringify(state));
+}
+
+function loadState() {
+  const saved = localStorage.getItem("gameState");
+  if (!saved) return null;
+  return JSON.parse(saved);
 }
 
 function setMovementController(controller: MovementController) {
@@ -435,6 +470,7 @@ function setMovementController(controller: MovementController) {
     : "button";
   url.searchParams.set("movement", mode);
   globalThis.history.replaceState({}, "", url);
+  saveState();
 }
 
 //at runtime parse the URL and choose which controller to use
@@ -448,6 +484,27 @@ if (movementMode === "geolocation") {
   setMovementController(buttonMove);
 }
 
+if (savedState) {
+  //restore game state
+  currentLocation.x = savedState.playerPosition.x;
+  currentLocation.y = savedState.playerPosition.y;
+  inventory = savedState.inventory;
+
+  //restore world state
+  worldState.clear();
+  for (const [key, value] of savedState.worldState) {
+    worldState.set(key, value);
+  }
+
+  //update UI to match inventory
+  if (inventory > 0) {
+    statusPanelDiv.innerHTML = "Your held Token value: " + inventory.toString();
+  } else {
+    statusPanelDiv.innerHTML = "No held Token...";
+  }
+}
+
+//movement controller button event handler
 toggleButton.addEventListener("click", () => {
   if (movementController instanceof GeolocationMovementController) {
     //switch buttons
@@ -462,6 +519,34 @@ toggleButton.addEventListener("click", () => {
     } else {
       alert("Geolocation not supported");
     }
+  }
+});
+
+//new game button event handler
+newGameButton.addEventListener("click", () => {
+  if (confirm("Start a new game? This will erase your progress.")) {
+    //clear localStorage
+    localStorage.removeItem("gameState");
+
+    //reset in-memory state
+    inventory = 0;
+    worldState.clear();
+
+    //reset to starting position
+    currentLocation.x = Starting_X;
+    currentLocation.y = Starting_Y;
+
+    //update player marker and map view
+    const newLat = currentLocation.y * TILE_DEGREES;
+    const newLng = currentLocation.x * TILE_DEGREES;
+    playerMarker.setLatLng([newLat, newLng]);
+    map.setView([newLat, newLng]);
+
+    //reset status display
+    statusPanelDiv.innerHTML = "No held Token....";
+
+    //redraw the grid to show fresh cells
+    updateVisibleCells();
   }
 });
 
