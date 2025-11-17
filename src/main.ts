@@ -178,8 +178,6 @@ class ButtonMovementController implements MovementController {
 class GeolocationMovementController implements MovementController {
   private callbacks: ((dx: number, dy: number) => void)[] = [];
   private watchId: number | null = null;
-  private lastLat: number | null = null;
-  private lastLng: number | null = null;
   private lastUpdateTime = 0;
   private readonly THROTTLE_MS = 1000;
 
@@ -215,36 +213,20 @@ class GeolocationMovementController implements MovementController {
           }
           this.lastUpdateTime = now;
 
-          //store postition
-          if (this.lastLat === null || this.lastLng === null) {
-            console.log("first postition locked:", { lat, lng });
-            this.lastLat = lat;
-            this.lastLng = lng;
-            return;
-          }
-
           //calculate delta in degrees
-          const deltaLat = lat - this.lastLat;
-          const deltaLng = lng - this.lastLng;
+          const deltaLng = lng - currentLocation.x * TILE_DEGREES;
+          const deltaLat = lat - currentLocation.y * TILE_DEGREES;
 
           //convert to grid units (TILE_DEGREES = 1e-4 -> ~10 meters per tile)
-          const dx = Math.round(deltaLng / TILE_DEGREES);
-          const dy = Math.round(deltaLat / TILE_DEGREES);
+          const dx = deltaLng / TILE_DEGREES;
+          const dy = deltaLat / TILE_DEGREES;
 
           //Ignore tiny movements (or noise)
           if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
             return;
           }
 
-          //clamp movement to one tile max in any direction
-          const stepX = Math.abs(dx) > 0 ? (dx > 0 ? 1 : -1) : 0;
-          const stepY = Math.abs(dy) > 0 ? (dy > 0 ? 1 : -1) : 0;
-
-          this.emit(stepX, stepY);
-
-          //update last position
-          this.lastLat = lat;
-          this.lastLng = lng;
+          this.emit(dx, dy);
         },
         (error) => {
           if (error.code === error.TIMEOUT) {
@@ -366,7 +348,7 @@ function spawnCell(x: number, y: number) {
       }
     }
     //add my win condition here
-    if (inventory == 16) {
+    if (inventory >= 32) {
       statusPanelDiv.innerHTML = "You WIN!!!!";
     }
   });
