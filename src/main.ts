@@ -90,6 +90,7 @@ controlPanelDiv.appendChild(toggleButton);
 
 const newGameButton = document.createElement("button");
 newGameButton.textContent = "New Game";
+controlPanelDiv.appendChild(newGameButton);
 
 // Add a marker to represent the player
 const playerMarker = leaflet.marker([
