@@ -36,6 +36,13 @@ const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
 const PERCENT_CHANCE = 0.30;
 
+// How many cells away the player can interact
+const PICKUP_RADIUS_CELLS = 3;
+// Approximate meters per degree latitude (used to convert TILE_DEGREES -> meters)
+const METERS_PER_DEGREE_LAT = 111320;
+const PICKUP_RADIUS_METERS = PICKUP_RADIUS_CELLS * TILE_DEGREES *
+  METERS_PER_DEGREE_LAT;
+
 //Singular Variable
 let inventory = 0;
 const THROTTLE_MS = 1000; //max once per second
@@ -93,9 +100,12 @@ controlPanelDiv.appendChild(newGameButton);
 
 // Add a marker to represent the player
 const playerMarker = leaflet.marker([
-  currentLocation.y * TILE_DEGREES,
-  currentLocation.x * TILE_DEGREES,
+  currentLocation.y * TILE_DEGREES + TILE_DEGREES / 2,
+  currentLocation.x * TILE_DEGREES + TILE_DEGREES / 2,
 ]);
+
+// A circle showing the pickup/crafting range around the player
+let playerRangeCircle: leaflet.Circle | null = null;
 
 //first define the interface of cell
 interface Cell {
@@ -122,6 +132,18 @@ type GameState = {
 //display playerMarker
 playerMarker.bindTooltip("That's you!");
 playerMarker.addTo(map);
+
+// create and show the range circle (will be updated when player moves)
+playerRangeCircle = leaflet.circle([
+  currentLocation.y * TILE_DEGREES + TILE_DEGREES / 2,
+  currentLocation.x * TILE_DEGREES + TILE_DEGREES / 2,
+], {
+  radius: PICKUP_RADIUS_METERS,
+  color: "#28a745",
+  fillColor: "rgba(40,167,69,0.12)",
+  weight: 1,
+});
+playerRangeCircle.addTo(map);
 
 // Display the player's points
 //let tokenValue = 0;
@@ -265,7 +287,16 @@ function spawnCell(x: number, y: number) {
   ]);
 
   // Add a rectangle to the map to represent the cache
-  const rect = leaflet.rectangle(bounds);
+  // highlight rectangles that are within pickup range
+  const distanceCells = Math.sqrt(
+    Math.pow(currentLocation.x - x, 2) + Math.pow(currentLocation.y - y, 2),
+  );
+  const isWithin = distanceCells <= PICKUP_RADIUS_CELLS;
+  const rect = leaflet.rectangle(bounds, {
+    color: isWithin ? "#28a745" : "#3388ff",
+    weight: 1,
+    fillOpacity: isWithin ? 0.15 : 0,
+  });
   rect.addTo(map);
 
   //create a value variable that stores the value in the cell
@@ -387,12 +418,15 @@ function playerMovement(dx: number, dy: number) {
   currentLocation.x = currentLocation.x + dx;
   currentLocation.y = currentLocation.y + dy;
 
-  //convert the grid coords to actual lat/lng
-  const newLat = currentLocation.y * TILE_DEGREES;
-  const newLng = currentLocation.x * TILE_DEGREES;
+  //convert the grid coords to actual lat/lng (center of the cell)
+  const newLat = currentLocation.y * TILE_DEGREES + TILE_DEGREES / 2;
+  const newLng = currentLocation.x * TILE_DEGREES + TILE_DEGREES / 2;
 
-  //move the player marer to the new position
+  //move the player marker to the new position (center of cell)
   playerMarker.setLatLng([newLat, newLng]);
+
+  //move the pickup-range circle as well
+  if (playerRangeCircle) playerRangeCircle.setLatLng([newLat, newLng]);
 
   //will always center around the player
   map.setView([newLat, newLng]);
@@ -493,6 +527,16 @@ newGameButton.addEventListener("click", () => {
     playerMarker.setLatLng([newLat, newLng]);
     map.setView([newLat, newLng]);
 
+    // use center-of-cell coordinates
+    const centeredNewLat = currentLocation.y * TILE_DEGREES + TILE_DEGREES / 2;
+    const centeredNewLng = currentLocation.x * TILE_DEGREES + TILE_DEGREES / 2;
+    playerMarker.setLatLng([centeredNewLat, centeredNewLng]);
+    map.setView([centeredNewLat, centeredNewLng]);
+
+    if (playerRangeCircle) {
+      playerRangeCircle.setLatLng([centeredNewLat, centeredNewLng]);
+    }
+
     //reset status display
     statusPanelDiv.innerHTML = "No held Token....";
 
@@ -525,13 +569,19 @@ if (savedState) {
 }
 
 playerMarker.setLatLng([
-  currentLocation.y * TILE_DEGREES,
-  currentLocation.x * TILE_DEGREES,
+  currentLocation.y * TILE_DEGREES + TILE_DEGREES / 2,
+  currentLocation.x * TILE_DEGREES + TILE_DEGREES / 2,
 ]);
 map.setView([
-  currentLocation.y * TILE_DEGREES,
-  currentLocation.x * TILE_DEGREES,
+  currentLocation.y * TILE_DEGREES + TILE_DEGREES / 2,
+  currentLocation.x * TILE_DEGREES + TILE_DEGREES / 2,
 ]);
+if (playerRangeCircle) {
+  playerRangeCircle.setLatLng([
+    currentLocation.y * TILE_DEGREES + TILE_DEGREES / 2,
+    currentLocation.x * TILE_DEGREES + TILE_DEGREES / 2,
+  ]);
+}
 
 //at runtime parse the URL and choose which controller to use
 if (movementMode === "geolocation") {
